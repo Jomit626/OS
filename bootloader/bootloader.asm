@@ -7,7 +7,7 @@ __bootloaderStart:
     jmp $
 
 %include "./bootloader/print_hex16.asm"
-%include "./bootloader/print_string.asm"
+%include "./bootloader/print_string16.asm"
 
 
 
