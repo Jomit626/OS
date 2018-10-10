@@ -11,9 +11,11 @@
 %include "./bootloader/gdt.asm"
 %include "./bootloader/switch_to_PM.asm"
 %include "./bootloader/print_string32.asm"
+%include "./bootloader/cls.asm"
 
 [bits 32]
 BEGIN_PM:
+    call cls
     mov ebx, Hello
     call print_string32
     jmp $
