@@ -1,5 +1,6 @@
 ;Func print c style string
 ;bx address of the string
+[bits 16]
 Print_String:
     pusha
     mov ah, 0x0e

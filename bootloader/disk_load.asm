@@ -1,4 +1,5 @@
 ;load DH sectors to ES:BX from drive DL
+[bits 16]
 disk_load:
     pusha 
     push dx 
@@ -9,7 +10,7 @@ disk_load:
     mov dh,0x0        ;track 0
     mov cl,0x2        ;sector 2(after boot secor) 
     int 0x13
-
+    
     jc disk_error
     
     pop dx
@@ -17,10 +18,11 @@ disk_load:
     jne disk_error
 
     popa
+    
     ret
 disk_error:
     mov bx, DISK_ERROR_MSG
-    call Print_Hex 
+    call Print_String 
     jmp $
 
 DISK_ERROR_MSG db "Disk read error!", 0
