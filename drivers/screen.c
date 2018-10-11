@@ -2,7 +2,7 @@
 #include "../kernel/kernel_low_c.c"
 
 void screen_init(){
-    //clean_screen(WHITE_ON_BLACK);
+    clean_screen(WHITE_ON_BLACK);
     set_cursor(0);
 }
 
@@ -16,7 +16,7 @@ void print_char(char row, char col, char charactor, char color)
 void print_cur(char charactor, char color){
     int offset = get_cursor();
     if (charactor=='\n'){
-        set_cursor((offset / 160 + 1) * 2);
+        set_cursor((offset / 160 + 1)* MAX_ROWS * 2);
         return;
     }
     char *video_memory = (char *)(VEDIO_MEMORY + offset);
