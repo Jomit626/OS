@@ -1,17 +1,15 @@
-void print_block(int row,int col,char color);
+#include "kernel.h"
+#include "../drivers/screen.c"
 
-int main(void){
-    int i = 0;
-    int j = 0;
-    print_block(10, 10,0xf0);
-    for (i = 0; i <= 25;i++){
-        for (j = 0; j <= 80;j++)
-            print_block(i, j,0xf0);
-    }
-}
-
-void print_block(int row,int col,char color) {
-    char *video_memory = (char *)(0xb8000+ 2*(80*row + col));
-    *video_memory = '\0';
-    *(video_memory-1) = color;
+int main(void)
+{
+    int offset = get_cursor();
+    print_char(11, 10 + offset, 'A', WHITE_ON_BLACK);
+    screen_init();
+    print_char(10, 10, 'A', WHITE_ON_BLACK);
+    print_char(11, 10 + offset, 'A', WHITE_ON_BLACK);
+    set_cursor(2);
+    offset = get_cursor();
+    print_char(12, 10 + offset, 'A', WHITE_ON_BLACK);
+    print_string("Hello!");
 }
