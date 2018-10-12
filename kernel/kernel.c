@@ -1,10 +1,13 @@
 #include "kernel.h"
-#include "../drivers/screen.c"
+#include "../drivers/screen.h"
 
 int main(void)
 {
     screen_init();
-    print_string("Hello!\n");
-    print_string("Hello!\n");
-    print_string("Hello!\n");
+    int i = 0;
+    print_string("Hello11111!\n");
+    for (i = 0; i < 21;i++){
+        print_string("Hello!\n");
+    }
+        
 }

@@ -1,71 +1,90 @@
 #include "screen.h"
-#include "../kernel/kernel_low_c.c"
+#include "../kernel/uilts.h"
+
+#define VEDIO_MEMORY 0Xb8000
+#define MAX_ROWS 80
+#define MAX_COLS 25
+// Screen device I/O ports
+#define REG_SCREEN_CTRL (short)0x3D4u
+#define REG_SCREEN_DATA (short)0x3D5u
+// get pos, NOT offset,offset = pos*2
+#define GET_POS(ROW, COL) ((ROW)*80 + (COL))
+
+//prvite func
+void print_cur(char charactor, char color);
+int get_cursor();
+void set_cursor(int pos);
+//--- Public func
 
 void screen_init(){
-    clean_screen(WHITE_ON_BLACK);
+    int i;
+
+    for (i = 0; i < (MAX_COLS * MAX_ROWS);i+=2){
+        char *videomem = (char *)(VEDIO_MEMORY + i);
+        videomem[0] = '\0';
+        videomem[1] = WHITE_ON_BLACK;
+
+    }
     set_cursor(0);
 }
 
-void print_char(char row, char col, char charactor, char color)
-{
-    char *video_memory = (char *)(VEDIO_MEMORY + 2 * (MAX_ROWS * row + col));
-    *video_memory = charactor;
-    *(video_memory + 1) = color;
-}
-
-void print_cur(char charactor, char color){
-    int offset = get_cursor();
-    if (charactor=='\n'){
-        set_cursor((offset / 160 + 1)* MAX_ROWS * 2);
-        return;
-    }
-    char *video_memory = (char *)(VEDIO_MEMORY + offset);
-    *video_memory = charactor;
-    *(video_memory + 1) = color;
-    set_cursor(offset + 2);
-    return;
-}
-
 void print_string(char* string){
-    while((*string) != '\0'){
-        print_cur(*string,WHITE_ON_BLACK);
-        string += 1;
+    while(*string != '\0'){
+        print_cur(*string, WHITE_ON_BLACK);
+        string++;
     }
 }
 
-void clean_screen(char color){
-    int i = 0;
-    char *video_memory = (char *)(VEDIO_MEMORY + 1);
-    for (i = 0; i <= (MAX_COLS * MAX_ROWS); i++){
-        *video_memory = 0x0;
-        *(video_memory + 1) = color;
-        video_memory += 2;
+//--- Prvite func
+
+void print_cur(char charactor,char color){
+    int pos = get_cursor();
+    print_char(pos, charactor, color);
+    pos++;
+    // Roll the screen
+    if (pos > MAX_COLS*MAX_ROWS){
+        int i;
+        char *video_memory = (char *)(VEDIO_MEMORY);
+        // rolling
+        for (i = 1; i < MAX_ROWS;i++){
+            memory_copy(video_memory + GET_POS(i, 0),
+                        video_memory + GET_POS(i - 1, 0),
+                        MAX_COLS * 2);
+        }
+        //make last row enpty
+        for(video_memory += GET_POS(MAX_ROWS - 1, 0) * 2;video_memory <= (char*)(VEDIO_MEMORY+GET_POS(MAX_ROWS,MAX_COLS)*2);video_memory+=2){
+            video_memory[0] = 0x0;
+            video_memory[1] = 0xf0;
+        }
+        pos = GET_POS(MAX_ROWS - 1, 0);
     }
-    return;
+
+    set_cursor(pos);
 }
 
-int get_cursor() { 
-    // The device uses its control register as an index
-    // to select its internal registers , of which we are 
-    // interested in:
-    // reg 14: which is the high byte of the cursor’s offset 
-    // reg 15: which is the low byte of the cursor’s offset 
-    // Once the internal register has been selected , we may read or
-    // write a byte on the data register. 
-    port_byte_out(REG_SCREEN_CTRL , 14);
-    int offset = port_byte_in(REG_SCREEN_DATA) << 8;
-    port_byte_out(REG_SCREEN_CTRL , 15);
-    offset += port_byte_in(REG_SCREEN_DATA);
-    // Since the cursor offset reported by the VGA hardware is the 
-    // number of characters , we multiply by two to convert it to 
-    // a character cell offset.
-    return offset*2;
+inline void print_char(int pos, char charactor, char color)
+{
+    char *video_memory = (char *)(VEDIO_MEMORY + pos*2);
+    video_memory[0] = charactor;
+    video_memory[1] = color;
 }
 
-void set_cursor(int offset) {
-    offset /= 2;
-    port_byte_out(REG_SCREEN_CTRL , 14);
-    port_byte_out(REG_SCREEN_DATA, (unsigned char)(offset>>8)) ;
-    port_byte_out(REG_SCREEN_CTRL,15 );
-    port_byte_out(REG_SCREEN_DATA, (unsigned char)(offset & 0xff));
+//---cursor contral
+void set_cursor(int pos)
+{
+    port_byte_out(REG_SCREEN_CTRL, 14);
+    port_byte_out(REG_SCREEN_CTRL, (pos >> 8));
+    port_byte_out(REG_SCREEN_CTRL, 15);
+    port_byte_out(REG_SCREEN_CTRL, (pos & 0xff));
+}
+
+int get_cursor()
+{
+    int pos;
+    port_byte_out(REG_SCREEN_CTRL, 14);
+    pos = port_byte_in(REG_SCREEN_DATA) << 8;
+    port_byte_out(REG_SCREEN_CTRL, 15);
+    pos += port_byte_in(REG_SCREEN_DATA);
+
+    return pos;
 }
