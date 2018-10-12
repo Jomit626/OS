@@ -4,10 +4,12 @@
 int main(void)
 {
     screen_init();
-    int i = 0;
-    print_string("Hello11111!\n");
-    for (i = 0; i < 21;i++){
-        print_string("Hello!\n");
+    int i,j,k=0;
+    for (i = 0; i < 20*25;i++){
+        for (j = 0; j < 1e5;j++)
+            k++;
+        print_string("1234");
     }
-        
+    print_string("12345");
+    
 }

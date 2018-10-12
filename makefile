@@ -6,7 +6,7 @@ DISK_IMG=./disk.img
 BOOT_LOADER_BIN=./bootloader/bootloader.bin
 KERNEL=./kernel/kernel.bin
 
-CC =gcc -ffreestanding -c -m32
+CC =gcc -ffreestanding -c -m32 -std=c11
 LD = ld -Ttext 0x1000 --oformat binary --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_ -m elf_i386
 
 .PHONY:all kernel bootloader
@@ -33,7 +33,7 @@ $(KERNEL_ASM_Objects):%.o:%.asm
 disk.img: $(KERNEL) $(BOOT_LOADER_BIN)
 	dd if=/dev/zero of=$(DISK_IMG) bs=512 count=2880 
 	dd conv=notrunc if=$(BOOT_LOADER_BIN) of=$(DISK_IMG) bs=512 count=2 seek=0 #conv=onturnc tells dd not to change the size of 'of'
-	dd conv=notrunc if=$(KERNEL) of=$(DISK_IMG) bs=512 count=30 seek=1
+	dd conv=notrunc if=$(KERNEL) of=$(DISK_IMG) bs=512 count=512 seek=1
 
 clean:
 	-rm -f $(BOOT_LOADER_BIN) $(DISK_IMG) $(KERNEL) $(KERNEL_ASM_Objects)  $(KERNEL_C_Objects)
