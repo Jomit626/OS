@@ -11,5 +11,5 @@ void screen_init();
 void print_string(char *string);
 void print_char(int pos, char charactor , char color);
 
-
+void print_cur(char charactor, char color);
 #endif

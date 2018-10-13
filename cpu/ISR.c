@@ -36,13 +36,165 @@ void ISR_install(){
     IDT_set_gate(29, (u32)isr29);
     IDT_set_gate(30, (u32)isr30);
     IDT_set_gate(31, (u32)isr31);
-    
+
+    IDT_set_gate(32, (u32)irq0);
+    IDT_set_gate(33, (u32)irq1);
+    IDT_set_gate(34, (u32)irq2);
+    IDT_set_gate(35, (u32)irq3);
+    IDT_set_gate(36, (u32)irq4);
+    IDT_set_gate(37, (u32)irq5);
+    IDT_set_gate(38, (u32)irq6);
+    IDT_set_gate(39, (u32)irq7);
+    IDT_set_gate(40, (u32)irq8);
+    IDT_set_gate(41, (u32)irq9);
+    IDT_set_gate(42, (u32)irq10);
+    IDT_set_gate(43, (u32)irq11);
+    IDT_set_gate(44, (u32)irq12);
+    IDT_set_gate(45, (u32)irq13);
+    IDT_set_gate(46, (u32)irq14);
+    IDT_set_gate(47, (u32)irq15);
+
     IDT_load_reg();
+
+
 }
 
+/* To print the message which defines every exception */
+char *exception_messages[] = {
+    "Division By Zero",
+    "Debug",
+    "Non Maskable Interrupt",
+    "Breakpoint",
+    "Into Detected Overflow",
+    "Out of Bounds",
+    "Invalid Opcode",
+    "No Coprocessor",
+
+    "Double Fault",
+    "Coprocessor Segment Overrun",
+    "Bad TSS",
+    "Segment Not Present",
+    "Stack Fault",
+    "General Protection Fault",
+    "Page Fault",
+    "Unknown Interrupt",
+
+    "Coprocessor Fault",
+    "Alignment Check",
+    "Machine Check",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved"
+};
+
 void ISR_handler(registers_t t){
-    
-    print_string("str");
+    print_string("received interrupt: ");
+    char s[3];
+    int_to_ascii(t.int_no, s);
+    print_string(s);
+    print_string("\n");
+    print_string(exception_messages[t.int_no]);
+    print_string("\n");
+}
+
+void IRQ_handler(registers_t t){
+    PCI_sent_EOI(t.int_no);
+    char str[31] = "Encounter Isr:\n";
+    print_string(str);
+    int_to_ascii(t.err_code, str);
+    print_string(str);
+    print_string("  \n");
+}
+
+//---------------------------PCI
+
+/* reinitialize the PIC controllers, giving them specified vector offsets
+   rather than 8h and 70h, as configured by default */
+ 
+#define ICW1_ICW4	0x01		/* ICW4 (not) needed */
+#define ICW1_SINGLE	0x02		/* Single (cascade) mode */
+#define ICW1_INTERVAL4	0x04		/* Call address interval 4 (8) */
+#define ICW1_LEVEL	0x08		/* Level triggered (edge) mode */
+#define ICW1_INIT	0x10		/* Initialization - required! */
+ 
+#define ICW4_8086	0x01		/* 8086/88 (MCS-80/85) mode */
+#define ICW4_AUTO	0x02		/* Auto (normal) EOI */
+#define ICW4_BUF_SLAVE	0x08		/* Buffered mode/slave */
+#define ICW4_BUF_MASTER	0x0C		/* Buffered mode/master */
+#define ICW4_SFNM	0x10		/* Special fully nested (not) */
+ 
+/*
+arguments:
+	offset1 - vector offset for master PIC
+		vectors on the master become offset1..offset1+7
+	offset2 - same for slave PIC: offset2..offset2+7
+*/
+void PIC_remap(int offset1, int offset2)
+{
+	unsigned char a1, a2;
+ 
+	a1 = port_byte_in(MASTER_PCI_DATA);                        // save masks
+	a2 = port_byte_in(SLAVE_PCI_DATA);
+ 
+	port_byte_out(MASTER_PCI_COM, ICW1_INIT+ICW1_ICW4);  // starts the initialization sequence (in cascade mode)
+	io_wait();
+	port_byte_out(SLAVE_PCI_COM, ICW1_INIT+ICW1_ICW4);
+	io_wait();
+	port_byte_out(MASTER_PCI_DATA, offset1);                 // ICW2: Master PIC vector offset
+	io_wait();
+	port_byte_out(SLAVE_PCI_DATA, offset2);                 // ICW2: Slave PIC vector offset
+	io_wait();
+	port_byte_out(MASTER_PCI_DATA, 4);                       // ICW3: tell Master PIC that there is a slave PIC at IRQ2 (0000 0100)
+	io_wait();
+	port_byte_out(SLAVE_PCI_DATA, 2);                       // ICW3: tell Slave PIC its cascade identity (0000 0010)
+	io_wait();
+ 
+	port_byte_out(MASTER_PCI_DATA, ICW4_8086);
+	io_wait();
+	port_byte_out(SLAVE_PCI_DATA, ICW4_8086);
+	io_wait();
+ 
+	port_byte_out(MASTER_PCI_DATA, a1);   // restore saved masks.
+	port_byte_out(SLAVE_PCI_DATA, a2);
+}
+
+void IRQ_set_mask(unsigned char IRQline) {
+    uint16_t port;
+    uint8_t value;
+ 
+    if(IRQline < 8) {
+        port = MASTER_PCI_COM;
+    } else {
+        port = SLAVE_PCI_DATA;
+        IRQline -= 8;
+    }
+    value = port_byte_in(port) | (1 << IRQline);
+    port_byte_out(port, value);        
+}
+ 
+void IRQ_clear_mask(unsigned char IRQline) {
+    uint16_t port;
+    uint8_t value;
+ 
+    if(IRQline < 8) {
+        port = MASTER_PCI_COM;
+    } else {
+        port = SLAVE_PCI_DATA;
+        IRQline -= 8;
+    }
+    value = port_byte_in(port) & ~(1 << IRQline);
+    port_byte_out(port, value);        
 }
 
 void PCI_sent_EOI(u8 irq){
@@ -52,3 +204,4 @@ void PCI_sent_EOI(u8 irq){
     }
     port_byte_out(MASTER_PCI_DATA, PCI_EOI);
 }
+

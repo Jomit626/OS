@@ -6,8 +6,8 @@
 #define MAX_ROWS 25
 #define MAX_COLS 80
 // Screen device I/O ports
-#define REG_SCREEN_CTRL (short)0x3D4u
-#define REG_SCREEN_DATA (short)0x3D5u
+#define REG_SCREEN_CTRL (u16)0x3D4
+#define REG_SCREEN_DATA (u16)0x3D5
 // get pos, NOT offset,offset = pos*2
 #define GET_POS(ROW, COL) ((ROW)*80 + (COL))
 
@@ -21,7 +21,7 @@ void screen_init(){
     int i;
 
     for (i = 0; i < (MAX_COLS * MAX_ROWS);i+=2){
-        char *videomem = (char *)(VEDIO_MEMORY + i);
+        char *videomem = (char *)(VEDIO_MEMORY + (char *)i);
         videomem[0] = '\0';
         videomem[1] = WHITE_ON_BLACK;
 
@@ -70,7 +70,7 @@ void print_cur(char charactor,char color){
     set_cursor(pos);
 }
 
-inline void print_char(int pos, char charactor, char color)
+void print_char(int pos, char charactor, char color)
 {
     char *video_memory = (char *)(VEDIO_MEMORY + pos*2);
     video_memory[0] = charactor;

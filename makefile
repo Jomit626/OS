@@ -6,12 +6,15 @@ DISK_IMG=./disk.img
 BOOT_LOADER_BIN=./bootloader/bootloader.bin
 KERNEL=./kernel/kernel.bin
 
-CC =gcc -ffreestanding -c -m32 -std=c11
-LD = ld -Ttext 0x1000 --oformat binary --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_ -m elf_i386
+CC =/home/jomit/opt/cross/bin/i686-elf-gcc -ffreestanding -c
+LD =/home/jomit/opt/cross/bin/i686-elf-ld -Ttext 0x1000 --oformat binary
 
-.PHONY:all kernel bootloader
+LD_DEBUG = ld -Ttext 0x1000 --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_
+
+.PHONY:all kernel bootloader debug
 
 disk: disk.img
+debug:./kernel/kernel.elf
 
 #------------------BOOTLOADER
 $(BOOT_LOADER_BIN):./bootloader/bootloader.asm
@@ -27,13 +30,17 @@ $(KERNEL_C_Objects):%.o:%.c
 	$(CC) $< -o $@
 #kernel asm objects
 $(KERNEL_ASM_Objects):%.o:%.asm
-	nasm -f ELF -o $@ $<
+	nasm -f elf -o $@ $<
 
 #-----------------DISK
 disk.img: $(KERNEL) $(BOOT_LOADER_BIN)
 	dd if=/dev/zero of=$(DISK_IMG) bs=512 count=2880 
 	dd conv=notrunc if=$(BOOT_LOADER_BIN) of=$(DISK_IMG) bs=512 count=2 seek=0 #conv=onturnc tells dd not to change the size of 'of'
-	dd conv=notrunc if=$(KERNEL) of=$(DISK_IMG) bs=512 count=512 seek=1
+	dd conv=notrunc if=$(KERNEL) of=$(DISK_IMG) bs=512 count=512 seek=2
+#----------------DEBUG
+./kernel/kernel.elf:$(KERNEL_C_Objects) $(KERNEL_ASM_Objects)
+	$(LD_DEBUG) -o ./kernel/kernel.elf $(KERNEL_ASM_Objects)  $(KERNEL_C_Objects)	
+
 
 clean:
-	-rm -f $(BOOT_LOADER_BIN) $(DISK_IMG) $(KERNEL) $(KERNEL_ASM_Objects)  $(KERNEL_C_Objects)
+	-rm -f $(BOOT_LOADER_BIN) $(DISK_IMG) $(KERNEL) $(KERNEL_ASM_Objects)  $(KERNEL_C_Objects) ./kernel/kernel.elf

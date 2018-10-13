@@ -52,3 +52,14 @@ void debug(){
     for (i = 0, j = 0; i < 1e10;i++)
         j++;
 }
+void print_in_bit(u32 i){
+    u32 mask = 1 << 31;
+    while(mask){
+        if (mask & i)
+            print_string("1");
+        else
+            print_string("0");
+        mask >>= 1;
+    }
+    print_string("end\n");
+}
