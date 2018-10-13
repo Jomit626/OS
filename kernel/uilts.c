@@ -1,44 +1,54 @@
 #include "uilts.h"
+#include "../drivers/screen.h"
 // Mem copy ,can be faster
-void memory_copy(char* source,char* dest,int nbytes){
+void memory_copy(char *source, char *dest, int nbytes)
+{
     int i = 0;
-    for (i = 0; i < nbytes;i++){
+    for (i = 0; i < nbytes; i++)
+    {
         *(dest + i) = *(source + i);
     }
 }
 
-/**
- * Read a byte from the specified port
- */
-inline unsigned char port_byte_in (unsigned short port) {
-    unsigned char result;
-    /* Inline assembler syntax
-     * !! Notice how the source and destination registers are switched from NASM !!
-     *
-     * '"=a" (result)'; set '=' the C variable '(result)' to the value of register e'a'x
-     * '"d" (port)': map the C variable '(port)' into e'd'x register
-     *
-     * Inputs and outputs are separated by colons
-     */
-    __asm__("in %%dx, %%al" : "=a" (result) : "d" (port));
-    return result;
-}
+void int_to_ascii(u32 i, char *str)
+{
+    char *str1 = str;
+    u8 sign = 0;
+    if (i < 0)
+    {
+        sign = 1;
+        i = -i;
+    }
 
-inline void port_byte_out (unsigned short port, unsigned char data) {
-    /* Notice how here both registers are mapped to C variables and
-     * nothing is returned, thus, no equals '=' in the asm syntax 
-     * However we see a comma since there are two variables in the input area
-     * and none in the 'return' area
-     */
-    __asm__("out %%al, %%dx" : : "a" (data), "d" (port));
-}
+    do
+    {
+        *str = '0' + i % 10;
+        i /= 10;
+        str++;
+    } while (i);
+    if (sign)
+    {
+        *str = '-';
+    }
 
-inline unsigned short port_word_in (unsigned short port) {
-    unsigned short result;
-    __asm__("in %%dx, %%ax" : "=a" (result) : "d" (port));
-    return result;
+    *(str++) = '\0';
+    str_reverse(str1);
 }
-
-inline void port_word_out (unsigned short port, unsigned short data) {
-    __asm__("out %%ax, %%dx" : : "a" (data), "d" (port));
+void str_reverse(char *str)
+{
+    u32 i = 0, j = 0;
+    while (str[i] != '\0')
+        i++;
+    i--;
+    for (j = 0; j <= i / 2;j++){
+        
+        char c = str[j];
+        str[j] = str[i - j];
+        str[i - j] = c;
+    }
+}
+void debug(){
+    int i, j;
+    for (i = 0, j = 0; i < 1e10;i++)
+        j++;
 }

@@ -1,6 +1,6 @@
 #kernel objects that need cc
-KERNEL_C_Objects = ./kernel/kernel.o ./kernel/uilts.o ./drivers/screen.o
-KERNEL_ASM_Objects = ./kernel/kernel_entry.o
+KERNEL_C_Objects = ./kernel/kernel.o ./kernel/uilts.o ./cpu/IDT.o ./cpu/ISR.o ./drivers/ports.o ./drivers/screen.o 
+KERNEL_ASM_Objects = ./kernel/kernel_entry.o ./cpu/ISR_handler.o
 
 DISK_IMG=./disk.img
 BOOT_LOADER_BIN=./bootloader/bootloader.bin

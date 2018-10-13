@@ -1,5 +1,6 @@
 #include "screen.h"
 #include "../kernel/uilts.h"
+#include "ports.h"
 
 #define VEDIO_MEMORY 0Xb8000
 #define MAX_ROWS 25

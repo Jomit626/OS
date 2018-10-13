@@ -1,15 +1,12 @@
 #include "kernel.h"
 #include "../drivers/screen.h"
+#include "uilts.h"
+#include "../cpu/ISR.h"
+#include "../cpu/IDT.h"
 
 int main(void)
 {
     screen_init();
-    int i,j,k=0;
-    for (i = 0; i < 20*25;i++){
-        for (j = 0; j < 1e5;j++)
-            k++;
-        print_string("1234");
-    }
-    print_string("12345");
-    
+    ISR_install();
+    __asm__ __volatile__("int $1");
 }
