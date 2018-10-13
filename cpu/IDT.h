@@ -10,7 +10,7 @@ typedef struct {
    u8 zero;      // unused, set to 0
    u8 type_attr; // type and attributes, see below
    u16 offset_2; // offset bits 16..31
-} IDT_gate;
+}__attribute__((packed)) IDT_gate;
 
 
 // load iwt `lidt`

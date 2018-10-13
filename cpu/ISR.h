@@ -22,7 +22,6 @@ typedef struct {
 } registers_t;
 
 //extern irq handler
-extern void ISR_handler_helper();
 extern void isr0();
 extern void isr1();
 extern void isr2();
@@ -90,11 +89,17 @@ extern void irq15();
 #define IRQ14 46
 #define IRQ15 47
 
-typedef void (*a)(registers_t);
+typedef void (*isr_t)(registers_t);
 
 //public func
 void ISR_install();
+
 void ISR_handler(registers_t t);
+void IRQ_handler(registers_t t);
+
 void PCI_sent_EOI(u8 irq);
-void PIC_remap(int offset1, int offset2);
+void PIC_remap(u8 offset1, u8 offset2);
+void IRQ_set_mask(unsigned char IRQline);
+void IRQ_clear_mask(unsigned char IRQline);
+void register_interrupt_handler(u8 n, isr_t handler);
 #endif

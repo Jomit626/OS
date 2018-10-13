@@ -1,5 +1,5 @@
 #kernel objects that need cc
-KERNEL_C_Objects = ./kernel/kernel.o ./kernel/uilts.o ./cpu/IDT.o ./cpu/ISR.o ./drivers/ports.o ./drivers/screen.o 
+KERNEL_C_Objects = ./kernel/kernel.o ./kernel/uilts.o ./cpu/IDT.o ./cpu/ISR.o  ./drivers/ports.o ./drivers/screen.o 
 KERNEL_ASM_Objects = ./kernel/kernel_entry.o ./cpu/ISR_handler.o
 
 DISK_IMG=./disk.img
@@ -8,8 +8,6 @@ KERNEL=./kernel/kernel.bin
 
 CC =/home/jomit/opt/cross/bin/i686-elf-gcc -ffreestanding -c
 LD =/home/jomit/opt/cross/bin/i686-elf-ld -Ttext 0x1000 --oformat binary
-
-LD_DEBUG = ld -Ttext 0x1000 --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_
 
 .PHONY:all kernel bootloader debug
 
@@ -33,10 +31,11 @@ $(KERNEL_ASM_Objects):%.o:%.asm
 	nasm -f elf -o $@ $<
 
 #-----------------DISK
-disk.img: $(KERNEL) $(BOOT_LOADER_BIN)
-	dd if=/dev/zero of=$(DISK_IMG) bs=512 count=2880 
-	dd conv=notrunc if=$(BOOT_LOADER_BIN) of=$(DISK_IMG) bs=512 count=2 seek=0 #conv=onturnc tells dd not to change the size of 'of'
-	dd conv=notrunc if=$(KERNEL) of=$(DISK_IMG) bs=512 count=512 seek=2
+disk.img: $(BOOT_LOADER_BIN) $(KERNEL) 
+	#dd if=/dev/zero of=$(DISK_IMG) bs=512 count=2880 
+	#dd conv=notrunc if=$(BOOT_LOADER_BIN) of=$(DISK_IMG) bs=512 count=2 seek=0 #conv=onturnc tells dd not to change the size of 'of'
+	#dd conv=notrunc if=$(KERNEL) of=$(DISK_IMG) bs=512 count=512 seek=1
+	cat $^ > os-image.bin
 #----------------DEBUG
 ./kernel/kernel.elf:$(KERNEL_C_Objects) $(KERNEL_ASM_Objects)
 	$(LD_DEBUG) -o ./kernel/kernel.elf $(KERNEL_ASM_Objects)  $(KERNEL_C_Objects)	
