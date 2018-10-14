@@ -128,11 +128,7 @@ void IRQ_handler(registers_t t){
     // if irq come from slave pci,sent both
     if (t.int_no >= 40) port_byte_out(0xA0, 0x20); /* slave */
     port_byte_out(0x20, 0x20); /* master */
-    print_string("received IRQ ");
-    char s[3];
-    int_to_ascii(t.int_no, s);
-    print_string(s);
-    print_string("\n");
+
     if (interrupt_handlers[t.int_no]) {
         interrupt_handlers[t.int_no](t);
     }
@@ -140,6 +136,7 @@ void IRQ_handler(registers_t t){
 
 void register_interrupt_handler(u8 n,isr_t handler){
     interrupt_handlers[n] = handler;
+    IRQ_clear_mask(n - 32);
 }
 
 //---------------------------PCI
@@ -189,8 +186,8 @@ void PIC_remap(u8 offset1, u8 offset2)
 	port_byte_out(SLAVE_PCI_DATA, ICW4_8086);
 	io_wait();
  
-	port_byte_out(MASTER_PCI_DATA, a1);   // restore saved masks.
-	port_byte_out(SLAVE_PCI_DATA, a2);
+	//port_byte_out(MASTER_PCI_DATA, a1);   // restore saved masks.
+	//port_byte_out(SLAVE_PCI_DATA, a2);
     port_byte_out(MASTER_PCI_COM, PCI_EOI);
     port_byte_out(SLAVE_PCI_COM, PCI_EOI);
 }
