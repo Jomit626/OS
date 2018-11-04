@@ -2,14 +2,10 @@
 #include "../kernel/uilts.h"
 #include "ports.h"
 
-#define VEDIO_MEMORY 0Xb8000
-#define MAX_ROWS 25
-#define MAX_COLS 80
+
 // Screen device I/O ports
 #define REG_SCREEN_CTRL (u16)0x3D4
 #define REG_SCREEN_DATA (u16)0x3D5
-// get pos, NOT offset,offset = pos*2
-#define GET_POS(ROW, COL) ((ROW)*80 + (COL))
 
 //prvite func
 void print_cur(char charactor, char color);
@@ -20,7 +16,7 @@ void set_cursor(int pos);
 void screen_init(){
     int i;
 
-    for (i = 0; i < (MAX_COLS * MAX_ROWS);i+=2){
+    for (i = 0; i < (MAX_COLS * MAX_ROWS)*2;i+=2){
         char *videomem = (char *)(VEDIO_MEMORY + (char *)i);
         videomem[0] = '\0';
         videomem[1] = WHITE_ON_BLACK;
